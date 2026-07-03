@@ -1,0 +1,35 @@
+# PKGBUILD per ZeroTier NetGUI
+pkgname=zerotier-netgui-bin
+pkgver=0.1.0
+pkgrel=2
+pkgdesc="ZeroTier NetGUI - Interfaccia di gestione per reti ZeroTier"
+arch=('x86_64')
+url="https://github.com/tuo-profilo/zerotier-netgui"
+license=('MIT')
+depends=('webkit2gtk-4.1' 'gtk3' 'cairo' 'pango' 'glib2')
+provides=('zerotier-netgui')
+conflicts=('zerotier-netgui')
+
+# Evitiamo di usare l'array source() per non confondere curl con gli spazi o percorsi relativi
+source=()
+sha256sums=()
+
+package() {
+    # $startdir è la directory in cui si trova il PKGBUILD (src-tauri/arch-pkg)
+    _debpath="$startdir/../target/release/bundle/deb/ZeroTier NetGUI_${pkgver}_amd64.deb"
+    
+    if [ ! -f "$_debpath" ]; then
+        echo "ERRORE: Impossibile trovare il file .deb generato in $_debpath"
+        exit 1
+    fi
+
+    # Entriamo nella cartella temporanea srcdir per estrarre l'ar
+    cd "$srcdir"
+    
+    # Estraiamo l'archivio ar del pacchetto Debian
+    ar x "$_debpath"
+    
+    # Estraiamo i dati dell'app (eseguibile, icone, file .desktop)
+    # direttamente nella cartella di installazione di Arch
+    tar -xf data.tar.gz -C "${pkgdir}"
+}

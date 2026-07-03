@@ -26,3 +26,9 @@ dist-ssr
 # Tauri
 src-tauri/target/
 src-tauri/gen/
+
+# Arch Linux Pacchetti (makepkg)
+src-tauri/arch-pkg/src/
+src-tauri/arch-pkg/pkg/
+src-tauri/arch-pkg/*.pkg.tar.*
+src-tauri/arch-pkg/*.log

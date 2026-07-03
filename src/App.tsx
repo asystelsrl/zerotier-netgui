@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import { save } from "@tauri-apps/plugin-dialog";
-import { Moon, Sun, Network, Lock, Loader2, Plus, LogOut, AlertCircle, RefreshCw, Trash2, Search, X, Download, Upload } from "lucide-react";
+import { Moon, Sun, Network, Lock, Loader2, Plus, LogOut, AlertCircle, RefreshCw, Trash2, Search, X, Download, Upload, Languages } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import "./App.css";
 
 interface ZTNetwork {
@@ -38,6 +39,7 @@ export default function App() {
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isWin, setIsWin] = useState(false);
+  const { t, i18n } = useTranslation();
 
   useEffect(() => {
     invoke<boolean>("is_windows").then(setIsWin).catch(console.error);
@@ -178,7 +180,7 @@ export default function App() {
       setActiveNetworks(parsed);
       syncSavedNetworks(parsed);
     } catch (e: any) {
-      setError("Password errata o ZeroTier non installato. (" + e + ")");
+      setError(t('login_error', { error: e }));
       setIsAuthed(false);
       localStorage.removeItem("sudo_pass");
     } finally {
@@ -197,7 +199,7 @@ export default function App() {
       await invoke("run_zerotier", { password, args: ["join", id] });
       await refreshNetworks();
     } catch (e: any) {
-      setError("Errore durante il join: " + e);
+      setError(t('error_join', { error: e }));
     } finally {
       setLoading(false);
     }
@@ -209,7 +211,7 @@ export default function App() {
       await invoke("run_zerotier", { password, args: ["leave", id] });
       await refreshNetworks();
     } catch (e: any) {
-      setError("Errore durante il leave: " + e);
+      setError(t('error_leave', { error: e }));
     } finally {
       setLoading(false);
     }
@@ -226,7 +228,7 @@ export default function App() {
       setActiveNetworks(parsed);
       syncSavedNetworks(parsed);
     } catch (e: any) {
-      setError("Errore refresh: " + e);
+      setError(t('error_refresh', { error: e }));
     } finally {
       setLoading(false);
     }
@@ -261,7 +263,7 @@ export default function App() {
         await invoke("save_file", { path: filePath, contents: dataStr });
       }
     } catch (e: any) {
-      setError("Errore durante l'esportazione: " + (e.message || String(e)));
+      setError(t('error_export', { error: e.message || String(e) }));
     }
   };
 
@@ -289,7 +291,7 @@ export default function App() {
           });
         }
       } catch (err) {
-        setError("Errore durante l'importazione del file JSON.");
+        setError(t('error_import'));
       }
       if (fileInputRef.current) fileInputRef.current.value = "";
     };
@@ -307,12 +309,18 @@ export default function App() {
                   <Network className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                 </div>
                 <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                  ZT NetGUI
+                  {t('app_title')}
                 </h1>
               </div>
-              <button onClick={toggleTheme} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-                {theme === "dark" ? <Sun className="w-5 h-5 text-amber-500" /> : <Moon className="w-5 h-5 text-slate-600" />}
-              </button>
+              <div className="flex items-center gap-2">
+                <button onClick={() => i18n.changeLanguage(i18n.language.startsWith('it') ? 'en' : 'it')} className="flex items-center gap-1 p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors text-slate-600 dark:text-slate-300 text-sm font-medium">
+                  <Languages className="w-5 h-5" />
+                  {i18n.language.startsWith('it') ? 'IT' : 'EN'}
+                </button>
+                <button onClick={toggleTheme} className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+                  {theme === "dark" ? <Sun className="w-5 h-5 text-amber-500" /> : <Moon className="w-5 h-5 text-slate-600" />}
+                </button>
+              </div>
             </div>
 
             <form onSubmit={handleLogin} className="space-y-6">
@@ -320,7 +328,7 @@ export default function App() {
                 <>
                   <div>
                     <label className="block text-sm font-medium mb-2 text-slate-700 dark:text-slate-300">
-                      Password Sudo
+                      {t('login_sudo_password')}
                     </label>
                     <div className="relative">
                       <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -331,7 +339,7 @@ export default function App() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         className="block w-full pl-10 pr-3 py-3 border border-slate-300 dark:border-slate-600 rounded-xl bg-slate-50 dark:bg-slate-900/50 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition-all text-slate-900 dark:text-white"
-                        placeholder="Inserisci password root"
+                        placeholder={t('login_insert_password')}
                         required
                       />
                     </div>
@@ -346,14 +354,14 @@ export default function App() {
                       className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded rounded-md"
                     />
                     <label htmlFor="remember" className="ml-2 block text-sm text-slate-700 dark:text-slate-300">
-                      Ricorda Password
+                      {t('login_remember')}
                     </label>
                   </div>
                 </>
               ) : (
                 <div className="p-4 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 text-sm rounded-xl border border-blue-200 dark:border-blue-800">
-                  <p className="font-medium mb-1 flex items-center gap-2"><Lock className="w-4 h-4" /> Modalità Windows</p>
-                  <p>Non è necessaria la password. Assicurati di aver avviato questa applicazione come <b>Amministratore</b>, altrimenti non potrai leggere o modificare lo stato delle reti.</p>
+                  <p className="font-medium mb-1 flex items-center gap-2"><Lock className="w-4 h-4" /> {t('login_windows_mode')}</p>
+                  <p dangerouslySetInnerHTML={{ __html: t('login_windows_info') }}></p>
                 </div>
               )}
 
@@ -369,7 +377,7 @@ export default function App() {
                 disabled={loading || (!isWin && !password)}
                 className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
               >
-                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Accedi"}
+                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : t('login_button')}
               </button>
             </form>
           </div>
@@ -426,10 +434,14 @@ export default function App() {
               )}
             </div>
             <h1 className="text-xl font-bold text-slate-800 dark:text-white">
-              ZeroTier Manager
+              {t('app_title')}
             </h1>
           </div>
           <div className="flex items-center gap-2">
+            <button onClick={() => i18n.changeLanguage(i18n.language.startsWith('it') ? 'en' : 'it')} className="p-2.5 rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors font-medium text-sm flex items-center gap-1">
+              <Languages className="w-5 h-5" />
+              <span className="hidden sm:inline">{i18n.language.startsWith('it') ? 'IT' : 'EN'}</span>
+            </button>
             <button onClick={refreshNetworks} disabled={loading} className="p-2.5 rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700 transition-colors disabled:opacity-50">
               <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
             </button>
@@ -452,14 +464,14 @@ export default function App() {
         {/* Add Network */}
         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-700">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-slate-800 dark:text-white">Unisciti a una rete</h2>
+            <h2 className="text-lg font-semibold text-slate-800 dark:text-white">{t('join_network_title')}</h2>
             <div className="flex gap-2">
               <input type="file" accept=".json" ref={fileInputRef} onChange={handleImport} className="hidden" />
               <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors">
-                <Upload className="w-4 h-4" /> Importa
+                <Upload className="w-4 h-4" /> {t('import_btn')}
               </button>
               <button onClick={handleExport} className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors">
-                <Download className="w-4 h-4" /> Esporta
+                <Download className="w-4 h-4" /> {t('export_btn')}
               </button>
             </div>
           </div>
@@ -468,7 +480,7 @@ export default function App() {
               type="text"
               value={newNetId}
               onChange={(e) => setNewNetId(e.target.value)}
-              placeholder="Inserisci ID Rete (es. 8056c2e21c...)"
+              placeholder={t('join_placeholder')}
               className="flex-1 px-4 py-2.5 border border-slate-300 dark:border-slate-600 rounded-xl bg-slate-50 dark:bg-slate-900/50 focus:ring-2 focus:ring-blue-500 outline-none transition-all dark:text-white"
             />
             <button
@@ -482,7 +494,7 @@ export default function App() {
               className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-medium transition-all active:scale-[0.98] disabled:opacity-50 flex items-center gap-2"
             >
               <Plus className="w-4 h-4" />
-              Join
+              {t('join_btn')}
             </button>
           </div>
         </div>
@@ -493,7 +505,7 @@ export default function App() {
           <div className="p-4 sm:p-6 border-b border-slate-200 dark:border-slate-700 flex flex-col xl:flex-row xl:items-center justify-between gap-4">
             <div className="flex flex-col sm:flex-row sm:items-center gap-4">
               <h2 className="text-lg font-semibold text-slate-800 dark:text-white flex items-center">
-                Le mie Reti
+                {t('my_networks')}
                 <span className="ml-3 text-xs font-normal px-2.5 py-1 bg-slate-100 dark:bg-slate-700 rounded-full text-slate-600 dark:text-slate-300">
                   {displayNetworks.length}
                 </span>
@@ -511,7 +523,7 @@ export default function App() {
                         : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'
                     }`}
                   >
-                    {f.replace('_', ' ')}
+                    {t(`filter_${f}`)}
                   </button>
                 ))}
               </div>
@@ -529,7 +541,7 @@ export default function App() {
                 
                 <input
                   type="text"
-                  placeholder="Cerca per nome o ID..."
+                  placeholder={t('search_placeholder')}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onFocus={() => setIsSearchExpanded(true)}
@@ -558,8 +570,8 @@ export default function App() {
             {displayNetworks.length === 0 ? (
               <div className="p-8 text-center text-slate-500 dark:text-slate-400">
                 {searchQuery || filterStatus !== "TUTTE" 
-                  ? "Nessuna rete corrisponde ai filtri impostati." 
-                  : "Nessuna rete trovata. Unisciti a una rete inserendo l'ID qui sopra."}
+                  ? t('no_networks_filtered') 
+                  : t('no_networks_found')}
               </div>
             ) : (
               displayNetworks.map(net => (
@@ -573,7 +585,7 @@ export default function App() {
                           {net.name}
                           {net.isActive && net.status === 'OK' && (
                             <span className="text-xs font-medium px-2 py-0.5 rounded bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                              Attiva
+                              {t('status_active')}
                             </span>
                           )}
                           {net.isActive && net.status !== 'OK' && (
@@ -583,7 +595,7 @@ export default function App() {
                           )}
                           {!net.isActive && (
                             <span className="text-xs font-medium px-2 py-0.5 rounded bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
-                              Disconnessa
+                              {t('status_disconnected')}
                             </span>
                           )}
                         </h3>
@@ -600,10 +612,10 @@ export default function App() {
                                 </span>
                               ))
                             ) : (
-                              <span className="text-xs text-amber-600 dark:text-amber-400">Richiesta IP in corso...</span>
+                              <span className="text-xs text-amber-600 dark:text-amber-400">{t('req_ip')}</span>
                             )}
                             <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
-                              Dev: {net.dev || "N/A"}
+                              {t('dev_label', { dev: net.dev || "N/A" })}
                             </span>
                           </div>
                         )}
@@ -617,7 +629,7 @@ export default function App() {
                           disabled={loading}
                           className="px-4 py-2 bg-red-50 text-red-600 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/40 dark:text-red-400 rounded-xl font-medium transition-colors text-sm disabled:opacity-50"
                         >
-                          Leave
+                          {t('leave_btn')}
                         </button>
                       ) : (
                         <>
@@ -626,13 +638,13 @@ export default function App() {
                             disabled={loading}
                             className="px-4 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/40 dark:text-blue-400 rounded-xl font-medium transition-colors text-sm disabled:opacity-50"
                           >
-                            Join
+                            {t('join_btn')}
                           </button>
                           <button
                             onClick={() => deleteSavedNetwork(net.id)}
                             disabled={loading}
                             className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors md:opacity-0 group-hover:opacity-100"
-                            title="Elimina dalla cronologia"
+                            title={t('delete_history')}
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
